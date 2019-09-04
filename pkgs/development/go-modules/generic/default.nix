@@ -1,4 +1,4 @@
-{ go, cacert, git, lib, removeReferencesTo, stdenv }:
+{ go, cacert, git, lib, removeReferencesTo, stdenv, openssh ? null }:
 
 { name ? "${args'.pname}-${args'.version}"
 , src
@@ -39,7 +39,7 @@ let
   go-modules = go.stdenv.mkDerivation (let modArgs = {
     name = "${name}-go-modules";
 
-    nativeBuildInputs = [ go git cacert ];
+    nativeBuildInputs = [ go git cacert openssh ];
 
     inherit (args) src;
     inherit (go) GOOS GOARCH;
