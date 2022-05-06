@@ -1,0 +1,47 @@
+diff --git a/src/libstore/build/local-derivation-goal.cc b/src/libstore/build/local-derivation-goal.cc
+index 2ba79ec46..8bc469352 100644
+--- a/src/libstore/build/local-derivation-goal.cc
++++ b/src/libstore/build/local-derivation-goal.cc
+@@ -364,7 +364,7 @@ void LocalDerivationGoal::startBuilder()
+ {
+     /* Right platform? */
+     if (!parsedDrv->canBuildLocally(worker.store))
+-        throw Error("a '%s' with features {%s} is required to build '%s', but I am a '%s' with features {%s}",
++        throw Error("a '%s' with features {%s} is required to build '%s', but I am a '%s' with features {%s}.",
+             drv->platform,
+             concatStringsSep(", ", parsedDrv->getRequiredSystemFeatures()),
+             worker.store.printStorePath(drvPath),
+diff --git a/src/libstore/parsed-derivations.cc b/src/libstore/parsed-derivations.cc
+index caddba9b1..9a287ff1a 100644
+--- a/src/libstore/parsed-derivations.cc
++++ b/src/libstore/parsed-derivations.cc
+@@ -100,17 +100,26 @@ StringSet ParsedDerivation::getRequiredSystemFeatures() const
+ 
+ bool ParsedDerivation::canBuildLocally(Store & localStore) const
+ {
++    warn("canBuildLocally");
++
+     if (drv.platform != settings.thisSystem.get()
+         && !settings.extraPlatforms.get().count(drv.platform)
+-        && !drv.isBuiltin())
++        && !drv.isBuiltin()) {
++        warn("skipping build of derivation '%s' on platform '%s'; it is not in 'extraPlatforms'", drvPath.to_string(), drv.platform);
+         return false;
++    }
+ 
+     if (settings.maxBuildJobs.get() == 0
+-        && !drv.isBuiltin())
++        && !drv.isBuiltin()) {
++        warn("skipping build of derivation '%s' because there is no build machine", drvPath.to_string());
+         return false;
++    }
+ 
+     for (auto & feature : getRequiredSystemFeatures())
+-        if (!localStore.systemFeatures.get().count(feature)) return false;
++        if (!localStore.systemFeatures.get().count(feature)) {
++            warn("skipping build of derivation '%s' because system feature '%s' is not enabled", drvPath.to_string(), feature);
++            return false;
++        }
+ 
+     return true;
+ }
